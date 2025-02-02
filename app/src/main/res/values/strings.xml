@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MyProject</string>
+    <string name="required_for_update_or_delete_only">Required for update or delete only</string>
+</resources>
