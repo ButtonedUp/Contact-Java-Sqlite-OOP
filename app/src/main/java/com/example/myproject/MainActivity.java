@@ -1,7 +1,6 @@
 package com.example.myproject;
 
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -22,7 +21,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         myDatabaseHelper = new MyDatabaseHelper(this);
-        SQLiteDatabase sqLiteDatabase = myDatabaseHelper.getWritableDatabase();
 
         idEditText = findViewById(R.id.IdEditTextID);
         nameEditText = findViewById(R.id.nameEditTextID);
@@ -54,39 +52,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return;
             }
 
-            long rowId = myDatabaseHelper.insertData(name, phone, email);
-            if (rowId == -1) {
-                Toast.makeText(this, "Error inserting data", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Row " + rowId + " inserted successfully", Toast.LENGTH_SHORT).show();
-            }
+            showConfirmationDialog("Add Data", "Are you sure you want to add this data?", () -> {
+                long rowId = myDatabaseHelper.insertData(name, phone, email);
+                if (rowId == -1) {
+                    Toast.makeText(this, "Error inserting data", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Row " + rowId + " inserted successfully", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
 
         if (v.getId() == R.id.displayAllDataButtonID) {
-            Cursor cursor = null;
-            try {
-                cursor = myDatabaseHelper.displayAllData();
-                if (cursor.getCount() == 0) {
-                    Toast.makeText(this, "No Data Found", Toast.LENGTH_SHORT).show();
-                    myDatabaseHelper.deleteAllData();
-                    return;
-                }
-
-                StringBuilder stringBuffer = new StringBuilder();
-                while (cursor.moveToNext()) {
-                    stringBuffer.append("ID: ").append(cursor.getString(0)).append("\n");
-                    stringBuffer.append("Name: ").append(cursor.getString(1)).append("\n");
-                    stringBuffer.append("Phone: ").append(cursor.getString(2)).append("\n");
-                    stringBuffer.append("Email: ").append(cursor.getString(3)).append("\n\n");
-                }
-
-                showData("Contact List", stringBuffer.toString());
-
-            } finally {
-                if (cursor != null) {
-                    cursor.close();
-                }
+            Cursor cursor = myDatabaseHelper.displayAllData();
+            if (cursor.getCount() == 0) {
+                Toast.makeText(this, "No Data Found", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            StringBuilder stringBuffer = new StringBuilder();
+            while (cursor.moveToNext()) {
+                stringBuffer.append("ID: ").append(cursor.getString(0)).append("\n");
+                stringBuffer.append("Name: ").append(cursor.getString(1)).append("\n");
+                stringBuffer.append("Phone: ").append(cursor.getString(2)).append("\n");
+                stringBuffer.append("Email: ").append(cursor.getString(3)).append("\n\n");
+            }
+            cursor.close();
+            showData("Contact List", stringBuffer.toString());
         }
 
         if (v.getId() == R.id.updateDataButtonID) {
@@ -95,25 +86,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return;
             }
 
-            boolean isUpdated = myDatabaseHelper.updateData(id, name, phone, email);
-            if (isUpdated) {
-                Toast.makeText(this, "Data updated successfully", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Update failed. Check ID", Toast.LENGTH_SHORT).show();
-            }
+            showConfirmationDialog("Update Data", "Are you sure you want to update this data?", () -> {
+                boolean isUpdated = myDatabaseHelper.updateData(id, name, phone, email);
+                if (isUpdated) {
+                    Toast.makeText(this, "Data updated successfully", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Update failed. Check ID", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
 
         if (v.getId() == R.id.deleteDataButtonID) {
-            int value = myDatabaseHelper.deleteData(id);
-            if (value > 0) {
-                Toast.makeText(this, "Data deleted successfully", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Delete failed. Check ID", Toast.LENGTH_SHORT).show();
+            if (id.isEmpty()) {
+                Toast.makeText(this, "Enter ID to delete data", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            showConfirmationDialog("Delete Data", "Are you sure you want to delete this data?", () -> {
+                int value = myDatabaseHelper.deleteData(id);
+                if (value > 0) {
+                    Toast.makeText(this, "Data deleted successfully", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Delete failed. Check ID", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
+
         if (v.getId() == R.id.deleteAllDataButtonID) {
-            myDatabaseHelper.deleteAllData();
-            Toast.makeText(this, "All data deleted successfully", Toast.LENGTH_SHORT).show();
+            showConfirmationDialog("Delete All Data", "Are you sure you want to delete all data?", () -> {
+                myDatabaseHelper.deleteAllData();
+                Toast.makeText(this, "All data deleted successfully", Toast.LENGTH_SHORT).show();
+            });
         }
     }
 
@@ -122,6 +125,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         builder.setTitle(title);
         builder.setMessage(resultSet);
         builder.setPositiveButton("OK", null);
+        builder.show();
+    }
+
+    private void showConfirmationDialog(String title, String message, Runnable onConfirm) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.setPositiveButton("Yes", (dialog, which) -> onConfirm.run());
+        builder.setNegativeButton("No", null);
         builder.show();
     }
 }

@@ -140,16 +140,18 @@
         android:textColor="#FFFFFF"
         android:textStyle="bold"
         android:elevation="6dp" />
+
     <Button
         android:id="@+id/deleteAllDataButtonID"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:backgroundTint="#BF0000"
+        android:elevation="6dp"
+        android:minHeight="48dp"
         android:text="Delete All Data"
         android:textColor="#FFFFFF"
-        android:textStyle="bold"
-        android:elevation="6dp" />
+        android:textStyle="bold" />
 
 
 
